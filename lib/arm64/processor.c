@@ -9,6 +9,7 @@
 #include <asm/ptrace.h>
 #include <asm/processor.h>
 #include <asm/thread_info.h>
+#include <asm/barrier.h>
 
 static const char *vector_names[] = {
 	"el1t_sync",
@@ -252,4 +253,18 @@ void start_usr(void (*func)(void *arg), void *arg, unsigned long sp_usr)
 bool is_user(void)
 {
 	return current_thread_info()->flags & TIF_USER_MODE;
+}
+
+void delay(u64 cycles)
+{
+	u64 start = get_cntvct();
+	while ((get_cntvct() - start) < cycles)
+		cpu_relax();
+}
+
+void udelay(unsigned long usec)
+{
+	unsigned int frq;
+	asm volatile("mrs %0, cntfrq_el0" : "=r" (frq));
+	delay((u64)usec * frq / 1000000);
 }
