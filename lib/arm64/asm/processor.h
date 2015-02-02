@@ -66,6 +66,16 @@ static inline unsigned long current_level(void)
 	return el & 0xc;
 }
 
+static inline void local_irq_enable(void)
+{
+	asm volatile("msr daifclr, #2" : : : "memory");
+}
+
+static inline void local_irq_disable(void)
+{
+	asm volatile("msr daifset, #2" : : : "memory");
+}
+
 #define DEFINE_GET_SYSREG32(reg)				\
 static inline unsigned int get_##reg(void)			\
 {								\
