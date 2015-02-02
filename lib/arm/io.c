@@ -12,6 +12,7 @@
 #include <devicetree.h>
 #include <chr-testdev.h>
 #include <asm/spinlock.h>
+#include <asm/gic.h>
 #include <asm/io.h>
 
 extern void halt(int code);
@@ -62,10 +63,40 @@ static void uart0_init(void)
 	}
 }
 
+struct gicv2_data gicv2_data;
+static int gicv2_init(void)
+{
+	const char *compatible = "arm,cortex-a15-gic";
+	struct dt_pbus_reg reg;
+	struct dt_device gic;
+	struct dt_bus bus;
+	int node;
+
+	dt_bus_init_defaults(&bus);
+	dt_device_init(&gic, &bus, NULL);
+
+	node = dt_device_find_compatible(&gic, compatible);
+	assert(node >= 0 || node == -FDT_ERR_NOTFOUND);
+
+	if (node == -FDT_ERR_NOTFOUND)
+		return node;
+
+	assert(dt_pbus_translate_node(node, 0, &reg) == 0);
+
+	gicv2_data.dist_base = ioremap(reg.addr, reg.size);
+
+	assert(dt_pbus_translate_node(node, 1, &reg) == 0);
+
+	gicv2_data.cpu_base = ioremap(reg.addr, reg.size);
+
+	return 0;
+}
+
 void io_init(void)
 {
 	uart0_init();
 	chr_testdev_init();
+	assert(gicv2_init() == 0);
 }
 
 void puts(const char *s)
