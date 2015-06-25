@@ -13,6 +13,11 @@ tests-common = \
 	$(TEST_DIR)/selftest.flat \
 	$(TEST_DIR)/spinlock-test.flat
 
+ifneq ($(TEST),)
+	tests = $(TEST_DIR)/$(TEST).flat
+	tests-common =
+endif
+
 all: test_cases
 
 ##################################################################
@@ -68,5 +73,6 @@ generated_files = $(asm-offsets)
 
 test_cases: $(generated_files) $(tests-common) $(tests)
 
+$(TEST_DIR)/$(TEST).elf: $(cstart.o) $(TEST_DIR)/$(TEST).o
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
