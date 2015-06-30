@@ -10,7 +10,8 @@ ifeq ($(LOADADDR),)
 endif
 
 tests-common = \
-	$(TEST_DIR)/selftest.flat
+	$(TEST_DIR)/selftest.flat \
+	$(TEST_DIR)/debugtest.flat
 
 all: test_cases
 
@@ -70,3 +71,5 @@ generated_files = $(asm-offsets)
 test_cases: $(generated_files) $(tests-common) $(tests)
 
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
+
+$(TEST_DIR)/debugtest.elf: $(cstart.o) $(TEST_DIR)/debugtest.o
