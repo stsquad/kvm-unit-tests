@@ -1,4 +1,5 @@
 #!/bin/bash
+# -*- sh-basic-offset:8 indent-tabs-mode: t -*-
 
 if [ ! -f config.mak ]; then
 	echo run ./configure first. See ./configure -h
