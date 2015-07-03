@@ -18,6 +18,23 @@ if [ -c /dev/kvm ]; then
 	fi
 fi
 
+while :; do
+	case $1 in
+		--force-tcg)
+			usingkvm=0
+			shift
+			;;
+		--)
+			# End of all options.
+			shift
+			break
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
 qemu="${QEMU:-qemu-system-$ARCH_NAME}"
 qpath=$(which $qemu 2>/dev/null)
 
