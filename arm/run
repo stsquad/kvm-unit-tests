@@ -8,6 +8,16 @@ fi
 source config.mak
 processor="$PROCESSOR"
 
+# Default to using KVM if available and on the right ARM host
+usingkvm=0
+if [ -c /dev/kvm ]; then
+	if [ "$HOST" = "arm" ] && [ "$ARCH" = "arm" ]; then
+		usingkvm=1
+	elif [ "$HOST" = "aarch64" ]; then
+		usingkvm=1
+	fi
+fi
+
 qemu="${QEMU:-qemu-system-$ARCH_NAME}"
 qpath=$(which $qemu 2>/dev/null)
 
@@ -39,7 +49,7 @@ chr_testdev='-device virtio-serial-device'
 chr_testdev+=' -device virtconsole,chardev=ctd -chardev testdev,id=ctd'
 
 # arm64 must use '-cpu host' with kvm
-if [ "$(arch)" = "aarch64" ] && [ "$ARCH" = "arm64" ] && [ -c /dev/kvm ]; then
+if [ $usingkvm = 1 ] && [ "$ARCH" = "arm64" ]; then
 	processor="host"
 fi
 
