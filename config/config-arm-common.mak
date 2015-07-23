@@ -9,9 +9,9 @@ ifeq ($(LOADADDR),)
 	LOADADDR = 0x40000000
 endif
 
-tests-common = \
-	$(TEST_DIR)/selftest.flat \
-	$(TEST_DIR)/spinlock-test.flat
+tests-common = $(TEST_DIR)/selftest.flat
+tests-common += $(TEST_DIR)/spinlock-test.flat
+tests-common += $(TEST_DIR)/tlbflush-test.flat
 
 ifneq ($(TEST),)
 	tests = $(TEST_DIR)/$(TEST).flat
@@ -77,3 +77,4 @@ test_cases: $(generated_files) $(tests-common) $(tests)
 $(TEST_DIR)/$(TEST).elf: $(cstart.o) $(TEST_DIR)/$(TEST).o
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
+$(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
