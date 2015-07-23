@@ -12,6 +12,7 @@ endif
 tests-common = $(TEST_DIR)/selftest.flat
 tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/ipi-test.flat
+tests-common += $(TEST_DIR)/tlbflush-test.flat
 
 all: test_cases
 
@@ -75,5 +76,6 @@ generated_files = $(asm-offsets)
 test_cases: $(generated_files) $(tests-common) $(tests)
 
 $(TEST_DIR)/ipi-test.elf: $(cstart.o) $(TEST_DIR)/ipi-test.o
+$(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
 
 $(TEST_DIR)/selftest.o $(cstart.o): $(asm-offsets)
