@@ -11,7 +11,8 @@ endif
 
 tests-common = \
 	$(TEST_DIR)/selftest.flat \
-	$(TEST_DIR)/spinlock-test.flat
+	$(TEST_DIR)/spinlock-test.flat \
+        $(TEST_DIR)/tlbflush.flat
 
 all: test_cases
 
@@ -72,3 +73,4 @@ test_cases: $(generated_files) $(tests-common) $(tests)
 
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
+$(TEST_DIR)/tlbflush.elf: $(cstart.o) $(TEST_DIR)/tlbflush.o
