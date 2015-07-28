@@ -1,0 +1,43 @@
+KVM Unit Tests Maintainers
+==========================
+
+The intention of this file is not to establish who owns what portions of the
+code base, but to provide a set of names that developers can consult when they
+have a question about a particular subset and also to provide a set of names
+to be CC'd when submitting a patch to obtain appropriate review.
+
+In general, if you have a question about inclusion of a patch, you
+should consult the KVM mailing list <kvm@vger.kernel.org> and not any
+specific individual privately.
+
+Descriptions of section entries:
+
+	M: Mail patches to: FullName <address@domain>
+        CC: Suggested CC's for review, does not guarantee review!
+	L: Mailing list that is relevant to this area
+	T: SCM tree type and location.  Type is one of: git, hg, quilt, stgit.
+	F: Files and directories with wildcard patterns.
+	   A trailing slash includes all files and subdirectory files.
+	   F:	drivers/net/	all files in and below drivers/net
+	   F:	drivers/net/*	all files in drivers/net, but not below
+	   F:	*/net/*		all files in "any top level directory"/net
+	   One pattern per line.  Multiple F: lines acceptable.
+
+
+Maintainers
+-----------
+M: Paolo Bonzini <pbonzini@redhat.com>
+M: Marcelo Tosatti <mtosatti@redhat.com>
+L: kvm@vger.kernel.org
+T: git://git.kernel.org/pub/scm/virt/kvm/kvm-unit-tests.git
+
+Architecture Specific Code:
+---------------------------
+
+ARM
+M: Andrew Jones <drjones@redhat.com>
+L: linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
+L: kvmarm@lists.cs.columbia.edu
+F: arm/*
+CC: Christoffer Dall <christoffer.dall@linaro.org>
+CC: Marc Zyngier <marc.zyngier@arm.com>
