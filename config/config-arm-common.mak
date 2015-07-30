@@ -13,7 +13,9 @@ tests-common = $(TEST_DIR)/selftest.flat
 tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
 
-all: test_cases
+utils-common = $(TEST_DIR)/utils/kvm-query
+
+all: test_cases utils
 
 ##################################################################
 phys_base = $(LOADADDR)
@@ -58,6 +60,9 @@ FLATLIBS = $(libcflat) $(LIBFDT_archive) $(libgcc) $(libeabi)
 $(libeabi): $(eabiobjs)
 	$(AR) rcs $@ $^
 
+$(TEST_DIR)/utils/%: $(TEST_DIR)/utils/%.c
+	$(CC) -std=gnu99 -o $@ $^
+
 arm_clean: libfdt_clean asm_offsets_clean
 	$(RM) $(TEST_DIR)/*.{o,flat,elf} $(libeabi) $(eabiobjs) \
 	      $(TEST_DIR)/.*.d lib/arm/.*.d
@@ -69,6 +74,7 @@ tests_and_config = $(TEST_DIR)/*.flat $(TEST_DIR)/unittests.cfg
 generated_files = $(asm-offsets)
 
 test_cases: $(generated_files) $(tests-common) $(tests)
+utils: $(utils-common)
 
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
