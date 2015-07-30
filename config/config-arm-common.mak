@@ -12,6 +12,7 @@ endif
 tests-common = $(TEST_DIR)/selftest.flat
 tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
+tests-common += $(TEST_DIR)/barrier-test.flat
 
 utils-common = $(TEST_DIR)/utils/kvm-query
 
@@ -79,3 +80,4 @@ utils: $(utils-common)
 $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
 $(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
+$(TEST_DIR)/barrier-test.elf: $(cstart.o) $(TEST_DIR)/barrier-test.o
