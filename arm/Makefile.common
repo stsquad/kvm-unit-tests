@@ -5,7 +5,6 @@
 #
 
 tests-common  = $(TEST_DIR)/selftest.flat
-tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/pci-test.flat
 tests-common += $(TEST_DIR)/pmu.flat
 tests-common += $(TEST_DIR)/gic.flat
@@ -13,6 +12,7 @@ tests-common += $(TEST_DIR)/psci.flat
 tests-common += $(TEST_DIR)/sieve.flat
 tests-common += $(TEST_DIR)/tlbflush-code.flat
 tests-common += $(TEST_DIR)/tlbflush-data.flat
+tests-common += $(TEST_DIR)/locking-test.flat
 
 tests-all = $(tests-common) $(tests)
 all: directories $(tests-all)
