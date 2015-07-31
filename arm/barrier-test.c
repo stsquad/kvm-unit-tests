@@ -48,11 +48,18 @@ static void increment_shared_with_lock(void)
 	unlock(&global_lock);
 }
 
-static void increment_shared_with_smp_mb(void)
+static void increment_shared_with_acqrel(void)
 {
-	smp_rmb();
-	shared_value++;
-	smp_wmb();
+	uint32_t tmp, res;
+
+	asm volatile(
+	"1:	ldxr	w0, [%[sptr]]\n"
+	"	add     w0, w0, #0x1\n"
+	"	stxr	w1, w0, [%[sptr]]\n"
+	"	cbnz	w1, 1b\n"
+	: /* out */
+	: [sptr] "r" (&shared_value) /* in */
+	: "w0", "w1", "cc");
 }
 
 /* The idea of this is just to generate some random load/store
@@ -106,24 +113,25 @@ static void do_increment(void)
 
 int main(int argc, char **argv)
 {
-	int cpu, i;
-	unsigned int sum = 0;
+	int cpu;
+	unsigned int i, sum = 0;
+	static const unsigned char seed[] = "myseed";
 
 	inc_fn = &increment_shared;
 
-	isaac_init(&prng_context[0], "myseed", 6);
-	
+	isaac_init(&prng_context[0], &seed[0], sizeof(seed));
+
 	for (i=0; i<argc; i++) {
 		char *arg = argv[i];
 
 		if (strcmp(arg, "lock") == 0) {
 			inc_fn = &increment_shared_with_lock;
 			report_prefix_push("lock");
-		} else if (strcmp(arg, "smp_mb") == 0) {
-			inc_fn = &increment_shared_with_smp_mb;
-			report_prefix_push("smp_mb");
+		} else if (strcmp(arg, "acqrel") == 0) {
+			inc_fn = &increment_shared_with_acqrel;
+			report_prefix_push("acqrel");
 		} else {
-			isaac_reseed(&prng_context[0], arg, strlen(arg));
+			isaac_reseed(&prng_context[0], (unsigned char *) arg, strlen(arg));
 		}
 	}
 
@@ -133,11 +141,11 @@ int main(int argc, char **argv)
 	}
 
 	for_each_present_cpu(cpu) {
-		uint32_t seed = isaac_next_uint32(&prng_context[0]);
+		uint32_t seed2 = isaac_next_uint32(&prng_context[0]);
 		if (cpu == 0)
 			continue;
 
-		isaac_init(&prng_context[cpu], &seed, sizeof(seed));
+		isaac_init(&prng_context[cpu], (unsigned char *) &seed2, sizeof(seed2));
 		smp_boot_secondary(cpu, do_increment);
 	}
 
@@ -147,11 +155,10 @@ int main(int argc, char **argv)
 		cpu_relax();
 
 	/* All CPUs done, do we add up */
-	
 	for_each_present_cpu(cpu) {
 		sum += per_cpu_value[cpu];
 	}
 	report("total incs %d", sum == shared_value, shared_value);
-	
+
 	return report_summary();
 }
