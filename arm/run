@@ -30,11 +30,15 @@ if ! $qemu -machine '?' 2>&1 | grep 'ARM Virtual Machine' > /dev/null; then
 fi
 
 M='-machine virt'
-if [ "$usingkvm" = "yes" ]; then
-	M+=',accel=kvm'
+if [ "$DRYRUN" != "yes" ]; then
+	if [ "$usingkvm" = "yes" ]; then
+		M+=',accel=kvm'
+	else
+		echo "Running with TCG"
+		M+=',accel=tcg'
+	fi
 else
-	echo "Running with TCG"
-	M+=',accel=tcg'
+	M+=',accel=kvm:tcg'
 fi
 
 if ! $qemu $M -device '?' 2>&1 | grep virtconsole > /dev/null; then
