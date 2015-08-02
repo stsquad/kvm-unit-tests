@@ -94,6 +94,13 @@ qemu="$qemu"
 if [ "\$QEMU" ]; then
 	qemu="\$QEMU"
 fi
+
+cmdline="\`echo '$cmdline' | sed s%$kernel%_NO_FILE_4Uhere_%\`"
+MAX_SMP=\`getconf _NPROCESSORS_CONF\`
+while \$qemu \$cmdline -smp \$MAX_SMP 2>&1 | grep 'exceeds max cpus' > /dev/null; do
+	MAX_SMP=\`expr \$MAX_SMP - 1\`
+done
+
 cmdline="\`echo '$cmdline' | sed s%$kernel%\$bin%\`"
 echo \$qemu $cmdline -smp $smp $opts
 \$qemu \$cmdline -smp $smp $opts
