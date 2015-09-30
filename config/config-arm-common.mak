@@ -13,6 +13,7 @@ tests-common = $(TEST_DIR)/selftest.flat
 tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
 tests-common += $(TEST_DIR)/locking-test.flat
+tests-common += $(TEST_DIR)/barrier-litmus-test.flat
 
 ifneq ($(TEST),)
 	tests = $(TEST_DIR)/$(TEST).flat
@@ -80,3 +81,4 @@ $(TEST_DIR)/selftest.elf: $(cstart.o) $(TEST_DIR)/selftest.o
 $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
 $(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
 $(TEST_DIR)/locking-test.elf: $(cstart.o) $(TEST_DIR)/locking-test.o
+$(TEST_DIR)/barrier-litmus-test.elf: $(cstart.o) $(TEST_DIR)/barrier-litmus-test.o
