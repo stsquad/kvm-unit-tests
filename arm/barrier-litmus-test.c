@@ -15,9 +15,10 @@
 
 #define MAX_CPUS 8
 
-/* How wide is the array */
+/* Array size and access controls */
 static int array_size = 100000;
 static int array_stride = 1;
+static int wait_if_ahead = 0;
 
 /*
  * These test_array_* structures are a contiguous array modified by two or more
@@ -99,7 +100,7 @@ void message_passing_read(void)
 		ready += y;
 	}
 
-	report("mp: %d errors, %d ready", errors == 0, errors, ready);
+	report_xfail("mp: %d errors, %d ready", true, errors == 0, errors, ready);
 }
 
 void message_passing_write_barrier(void)
@@ -118,7 +119,7 @@ void message_passing_write_barrier(void)
 void message_passing_read_barrier(void)
 {
 	int i;
-	int errors = 0, ready = 0;
+	int errors = 0, ready = 0, not_ready = 0;
 
 	for (i=0; i< array_size; i++) {
 		volatile test_array *entry = &array[i];
@@ -129,7 +130,19 @@ void message_passing_read_barrier(void)
 
 		if (y && !x)
 			errors++;
-		ready += y;
+
+		if (y) {
+			ready++;
+		} else {
+			not_ready++;
+
+			if (not_ready > 2) {
+				entry = &array[i+1];
+				do {
+					not_ready = 0;
+				} while (wait_if_ahead && !entry->y);
+			}
+		}
 	}
 
 	report("mp barrier: %d errors, %d ready", errors == 0, errors, ready);
@@ -219,6 +232,8 @@ int main(int argc, char **argv)
 		if (strstr(arg, "count=") != NULL) {
 			char *p = strstr(arg, "=");
 			array_size = atol(p+1);
+		} else if (strcmp (arg, "wait") == 0) {
+			wait_if_ahead = 1;
 		}
 	}
 
