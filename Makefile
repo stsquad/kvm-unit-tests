@@ -51,10 +51,12 @@ fomit_frame_pointer := $(call cc-option, $(frame-pointer-flag), "")
 fnostack_protector := $(call cc-option, -fno-stack-protector, "")
 fnostack_protector_all := $(call cc-option, -fno-stack-protector-all, "")
 wno_frame_address := $(call cc-option, -Wno-frame-address, "")
+fno_strict_aliasing := $(call cc-option, -fno-strict-aliasing, "")
 CFLAGS += $(fomit_frame_pointer)
 CFLAGS += $(fno_stack_protector)
 CFLAGS += $(fno_stack_protector_all)
 CFLAGS += $(wno_frame_address)
+CFLAGS += $(fno_strict_aliasing)
 
 CXXFLAGS += $(CFLAGS)
 
