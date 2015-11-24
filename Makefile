@@ -47,9 +47,11 @@ frame-pointer-flag=-f$(if $(KEEP_FRAME_POINTER),no-,)omit-frame-pointer
 fomit_frame_pointer := $(call cc-option, $(frame-pointer-flag), "")
 fnostack_protector := $(call cc-option, -fno-stack-protector, "")
 fnostack_protector_all := $(call cc-option, -fno-stack-protector-all, "")
+fno_strict_aliasing := $(call cc-option, -fno-strict-aliasing, "")
 CFLAGS += $(fomit_frame_pointer)
 CFLAGS += $(fno_stack_protector)
 CFLAGS += $(fno_stack_protector_all)
+CFLAGS += $(fno_strict_aliasing)
 
 CXXFLAGS += $(CFLAGS)
 
