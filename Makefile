@@ -62,13 +62,14 @@ fnostack_protector_all := $(call cc-option, -fno-stack-protector-all, "")
 wno_frame_address := $(call cc-option, -Wno-frame-address, "")
 fno_pic := $(call cc-option, -fno-pic, "")
 no_pie := $(call cc-option, -no-pie, "")
+fno_strict_aliasing := $(call cc-option, -fno-strict-aliasing, "")
 COMMON_CFLAGS += $(fomit_frame_pointer)
 COMMON_CFLAGS += $(fno_stack_protector)
 COMMON_CFLAGS += $(fno_stack_protector_all)
 COMMON_CFLAGS += $(wno_frame_address)
 COMMON_CFLAGS += $(if $(U32_LONG_FMT),-D__U32_LONG_FMT__,)
 COMMON_CFLAGS += $(fno_pic) $(no_pie)
-
+COMMON_CFLAGS += $(fno_strict_aliasing)
 CFLAGS += $(COMMON_CFLAGS)
 CFLAGS += -Wmissing-parameter-type -Wold-style-declaration -Woverride-init
 
