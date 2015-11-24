@@ -14,6 +14,7 @@ tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/ipi-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
 tests-common += $(TEST_DIR)/locking-test.flat
+tests-common += $(TEST_DIR)/barrier-litmus-test.flat
 
 all: test_cases
 
@@ -76,3 +77,4 @@ $(TEST_DIR)/spinlock-test.elf: $(cstart.o) $(TEST_DIR)/spinlock-test.o
 $(TEST_DIR)/ipi-test.elf: $(cstart.o) $(TEST_DIR)/ipi-test.o
 $(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
 $(TEST_DIR)/locking-test.elf: $(cstart.o) $(TEST_DIR)/locking-test.o
+$(TEST_DIR)/barrier-litmus-test.elf: $(cstart.o) $(TEST_DIR)/barrier-litmus-test.o
