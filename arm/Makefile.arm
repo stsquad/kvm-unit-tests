@@ -28,4 +28,6 @@ tests =
 
 include $(SRCDIR)/$(TEST_DIR)/Makefile.common
 
+$(TEST_DIR)/tcg-test.elf: $(cstart.o) $(TEST_DIR)/tcg-test.o $(TEST_DIR)/tcg-test-asm.o
+
 arch_clean: arm_clean

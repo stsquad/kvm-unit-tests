@@ -14,6 +14,7 @@ tests-common += $(TEST_DIR)/tlbflush-code.flat
 tests-common += $(TEST_DIR)/tlbflush-data.flat
 tests-common += $(TEST_DIR)/locking-test.flat
 tests-common += $(TEST_DIR)/barrier-litmus-test.flat
+tests-common += $(TEST_DIR)/tcg-test.flat
 
 tests-all = $(tests-common) $(tests)
 all: directories $(tests-all)
