@@ -15,6 +15,7 @@ tests-common += $(TEST_DIR)/ipi-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
 tests-common += $(TEST_DIR)/locking-test.flat
 tests-common += $(TEST_DIR)/barrier-litmus-test.flat
+tests-common += $(TEST_DIR)/tcg-test.flat
 
 all: test_cases
 
@@ -78,3 +79,4 @@ $(TEST_DIR)/ipi-test.elf: $(cstart.o) $(TEST_DIR)/ipi-test.o
 $(TEST_DIR)/tlbflush-test.elf: $(cstart.o) $(TEST_DIR)/tlbflush-test.o
 $(TEST_DIR)/locking-test.elf: $(cstart.o) $(TEST_DIR)/locking-test.o
 $(TEST_DIR)/barrier-litmus-test.elf: $(cstart.o) $(TEST_DIR)/barrier-litmus-test.o
+$(TEST_DIR)/tcg-test.elf: $(cstart.o) $(TEST_DIR)/tcg-test.o $(TEST_DIR)/tcg-test-asm.o
