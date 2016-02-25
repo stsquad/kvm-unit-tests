@@ -15,6 +15,7 @@ tests-common += $(TEST_DIR)/ipi-test.flat
 tests-common += $(TEST_DIR)/tlbflush-test.flat
 tests-common += $(TEST_DIR)/locking-test.flat
 tests-common += $(TEST_DIR)/barrier-litmus-test.flat
+tests-common += $(TEST_DIR)/tcg-test.flat
 
 all: test_cases
 
