@@ -85,6 +85,15 @@ static inline unsigned int get_##reg(void)			\
 }
 DEFINE_GET_SYSREG32(mpidr)
 
+#define DEFINE_GET_SYSREG64(reg)				\
+static inline unsigned long get_##reg(void)			\
+{								\
+	unsigned long reg;					\
+	asm volatile("mrs %0, " #reg : "=r" (reg));		\
+	return reg;						\
+}
+DEFINE_GET_SYSREG64(cntpct_el0)
+
 /* Only support Aff0 for now, gicv2 only */
 #define mpidr_to_cpu(mpidr) ((int)((mpidr) & 0xff))
 

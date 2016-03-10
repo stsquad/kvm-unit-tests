@@ -50,6 +50,13 @@ static inline unsigned int get_mpidr(void)
 	return mpidr;
 }
 
+static inline unsigned long long get_cntpct_el0(void)
+{
+	unsigned long long pct;
+	asm volatile("mrrc p15, 0, %Q0, %R0, c14" : "=&r" (pct));
+	return pct;
+}
+
 /* Only support Aff0 for now, up to 4 cpus */
 #define mpidr_to_cpu(mpidr) ((int)((mpidr) & 0xff))
 
