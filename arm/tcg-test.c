@@ -5,6 +5,7 @@
  */
 
 #include <libcflat.h>
+#include <asm/processor.h>
 #include <asm/smp.h>
 #include <asm/cpumask.h>
 #include <asm/barrier.h>
@@ -69,15 +70,26 @@ static test_descr_t tests[] = {
 
 static test_descr_t *test = NULL;
 
-static int iterations = 100000;
+static int iterations = 1000000;
 static int rounds = 1000;
 static int mod_freq = 5;
 static uint32_t pattern[MAX_CPUS];
 
+/* control flags */
 static int smc = 0;
 static int irq = 0;
+static int check_irq = 0;
+
+/* IRQ accounting */
+#define MAX_IRQ_IDS 16
+static unsigned long irq_sent_ts[MAX_CPUS][MAX_CPUS][MAX_IRQ_IDS];
+
 static int irq_recv[MAX_CPUS];
 static int irq_sent[MAX_CPUS];
+static int irq_overlap[MAX_CPUS];  /* if ts > now, i.e a race */
+static int irq_slow[MAX_CPUS];  /* if delay > threshold */
+static unsigned long irq_latency[MAX_CPUS]; /* cumulative time */
+
 static int errors[MAX_CPUS];
 
 static cpumask_t smp_test_complete;
@@ -102,21 +114,41 @@ void trigger_smc_detection(uint32_t *start, uint32_t *end)
 
 static void irq_handler(struct pt_regs *regs __unused)
 {
+	unsigned long then, now = get_cntpct_el0();
 	int cpu = smp_processor_id();
+	unsigned int iar, irq, src_cpu;
 	irq_recv[cpu]++;
-	gic_irq_ack();
+	iar = gic_irq_ack();
+
+	/* work out when the IRQ was sent */
+	irq = iar & 0xf;  /* SGI IDs only use 0:3 */
+	src_cpu = (iar >> 10) & 0x7;
+	then = irq_sent_ts[src_cpu][cpu][irq];
+
+	if (then > now) {
+		irq_overlap[cpu]++;
+	} else {
+		unsigned long latency = (now - then);
+		if (latency > 30000) {
+			irq_slow[cpu]++;
+		} else {
+			irq_latency[cpu] += latency;
+		}
+	}
 }
 
 /* This triggers cross-CPU IRQs. Each IRQ should cause the basic block
  * execution to finish the main run-loop get entered again.
  */
-int send_cross_cpu_irqs(int this_cpu)
+int send_cross_cpu_irqs(int this_cpu, int irq)
 {
 	int cpu, sent = 0;
 
 	for_each_present_cpu(cpu) {
 		if (cpu != this_cpu) {
-			gic_send_sgi(cpu, 1);
+			irq_sent_ts[this_cpu][cpu][irq] = get_cntpct_el0();
+			smp_wmb();
+			gic_send_sgi(cpu, irq);
 			sent++;
 		}
 	}
@@ -124,11 +156,10 @@ int send_cross_cpu_irqs(int this_cpu)
 	return sent;
 }
 
-
 void do_test(void)
 {
 	int cpu = smp_processor_id();
-	int i;
+	int i, irq_id = 0;
 
 	printf("CPU%d: online and setting up with pattern 0x%"PRIx32"\n", cpu, pattern[cpu]);
 
@@ -154,7 +185,9 @@ void do_test(void)
 						test->code_end);
 			}
 			if (irq) {
-				irq_sent[cpu] += send_cross_cpu_irqs(cpu);
+				irq_sent[cpu] += send_cross_cpu_irqs(cpu, irq_id);
+				irq_id++;
+				irq_id = irq_id % 15;
 			}
 		}
 	}
@@ -164,6 +197,18 @@ void do_test(void)
 	cpumask_set_cpu(cpu, &smp_test_complete);
 	if (cpu != 0)
 		halt();
+}
+
+void report_irq_stats(int cpu)
+{
+	int recv = irq_recv[cpu];
+	int race = irq_overlap[cpu];
+	int slow = irq_slow[cpu];
+
+	unsigned long avg_latency = irq_latency[cpu] / (recv - (race + slow));
+
+	printf("CPU%d: %d irqs (%d races, %d slow,  %ld ticks avg latency)\n",
+		cpu, recv, race, slow, avg_latency);
 }
 
 
@@ -195,16 +240,28 @@ void setup_and_run_tcg_test(void)
 	while (!cpumask_full(&smp_test_complete))
 		cpu_relax();
 
-	smp_rmb();
+	smp_mb();
 
 	/* Now total up errors and irqs */
 	for_each_present_cpu(cpu) {
 		total_err += errors[cpu];
 		total_sent += irq_sent[cpu];
 		total_recv += irq_recv[cpu];
+
+		if (check_irq) {
+			report_irq_stats(cpu);
+		}
 	}
 
-	report("%d errors, %d sent, %d recv", total_err == 0, total_err, total_sent, total_recv);
+	if (check_irq) {
+		if (total_sent != total_recv) {
+			report("%d IRQs sent, %d received\n", false, total_sent, total_recv);
+		} else {
+			report("%d errors, IRQs OK", total_err == 0, total_err);
+		}
+	} else {
+		report("%d errors, IRQs not checked", total_err == 0, total_err);
+	}
 }
 
 int main(int argc, char **argv)
@@ -245,6 +302,10 @@ int main(int argc, char **argv)
 		if (strcmp(arg, "irq") == 0) {
 			irq = 1;
 			report_prefix_push("irq");
+		}
+
+		if (strcmp(arg, "check_irq") == 0) {
+			check_irq = 1;
 		}
 	}
 
