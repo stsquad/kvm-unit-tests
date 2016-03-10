@@ -107,10 +107,11 @@ static inline void gic_enable(void)
 	writel(GICC_ENABLE, GIC_CPU_BASE + GIC_CPU_CTRL);
 }
 
-static inline void gic_irq_ack(void)
+static inline unsigned int gic_irq_ack(void)
 {
 	unsigned int iar = readl(GIC_CPU_BASE + GIC_CPU_INTACK);
 	writel(iar, GIC_CPU_BASE + GIC_CPU_EOI);
+	return iar;
 }
 
 static inline void gic_send_sgi(unsigned int cpu, unsigned int irq)
