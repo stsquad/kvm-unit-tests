@@ -22,6 +22,10 @@ function run()
         return
     fi
 
+    if [ -n "$force_accel" ]; then
+        accel=$force_accel
+    fi
+
     if [ -n "$arch" ] && [ "$arch" != "$ARCH" ]; then
         echo "skip $1 ($arch only)"
         return 2
