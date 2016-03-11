@@ -79,6 +79,10 @@ function run()
         accel=$force_accel
     fi
 
+    if [ "$no_timeout" = "yes" ]; then
+        timeout=""
+    fi
+
     if [ -n "$arch" ] && [ "$arch" != "$ARCH" ]; then
         echo "`SKIP` $1 ($arch only)"
         return 2
