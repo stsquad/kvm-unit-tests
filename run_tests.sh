@@ -13,10 +13,11 @@ function usage()
 {
 cat <<EOF
 
-Usage: $0 [-g group] [-a accel] [-h] [-v]
+Usage: $0 [-g group] [-a accel] [-t] [-h] [-v]
 
     -g: Only execute tests in the given group
     -a: Force acceleration mode (tcg/kvm)
+    -t: disable timeouts
     -h: Output this help text
     -v: Enables verbose mode
 
@@ -29,13 +30,16 @@ EOF
 RUNTIME_arch_run="./$TEST_DIR/run"
 source scripts/runtime.bash
 
-while getopts "g:a:hv" opt; do
+while getopts "g:a:thv" opt; do
     case $opt in
         g)
             only_group=$OPTARG
             ;;
         a)
             force_accel=$OPTARG
+            ;;
+        t)
+            no_timeout="yes"
             ;;
         h)
             usage
