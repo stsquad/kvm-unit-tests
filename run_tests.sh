@@ -13,10 +13,11 @@ function usage()
 {
 cat <<EOF
 
-Usage: $0 [-g group] [-a accel] [-t] [-h] [-v]
+Usage: $0 [-g group] [-a accel] [-o qemu_opts] [-t] [-h] [-v]
 
     -g: Only execute tests in the given group
     -a: Force acceleration mode (tcg/kvm)
+    -o: additional options for QEMU command line
     -t: disable timeouts
     -h: Output this help text
     -v: Enables verbose mode
@@ -30,13 +31,16 @@ EOF
 RUNTIME_arch_run="./$TEST_DIR/run"
 source scripts/runtime.bash
 
-while getopts "g:a:thv" opt; do
+while getopts "g:a:o:thv" opt; do
     case $opt in
         g)
             only_group=$OPTARG
             ;;
         a)
             force_accel=$OPTARG
+            ;;
+        o)
+            extra_opts=$OPTARG
             ;;
         t)
             no_timeout="yes"
@@ -67,4 +71,4 @@ RUNTIME_log_stdout () {
 config=$TEST_DIR/unittests.cfg
 rm -f test.log
 printf "BUILD_HEAD=$(cat build-head)\n\n" > test.log
-for_each_unittest $config run
+for_each_unittest $config run "$extra_opts"
