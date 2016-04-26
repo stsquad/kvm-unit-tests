@@ -19,6 +19,8 @@
 static int array_size = 100000;
 static int wait_if_ahead = 0;
 
+static cpumask_t cpu_mask;
+
 /*
  * These test_array_* structures are a contiguous array modified by two or more
  * competing CPUs. The padding is to ensure the variables do not share
@@ -33,7 +35,7 @@ typedef struct test_array
 	uint8_t dummy[64];
 	volatile unsigned int y;
 	uint8_t dummy2[64];
-	volatile int z;
+	volatile unsigned int r[MAX_CPUS];
 } test_array;
 
 volatile test_array *array;
@@ -185,6 +187,162 @@ void message_passing_read_acquire(void)
 	report("mp acqrel: %d errors, %d ready", errors == 0, errors, ready);
 }
 
+/*
+ * Store after load
+ *
+ * T1: write 1 to x, load r from y
+ * T2: write 1 to y, load r from x
+ *
+ * Without memory fence r[0] && r[1] == 0
+ * With memory fence both == 0 should be impossible
+ */
+
+static void check_store_and_load_results(char *name, int thread, unsigned long start, unsigned long end)
+{
+	int i;
+	int neither = 0;
+	int only_first = 0;
+	int only_second = 0;
+	int both = 0;
+
+	for (i=0; i< array_size; i++) {
+		volatile test_array *entry = &array[i];
+		if (entry->r[0] == 0 &&
+		    entry->r[1] == 0) {
+			neither++;
+		} else if (entry->r[0] &&
+			entry->r[1]) {
+			both++;
+		} else if (entry->r[0]) {
+			only_first++;
+		} else {
+			only_second++;
+		}
+	}
+
+	printf("T%d: %08lx->%08lx neither=%d only_t1=%d only_t2=%d both=%d\n", thread,
+		start, end, neither, only_first, only_second, both);
+
+	if (thread == 1) {
+		report("%s: errors=%d", neither==0, name, neither);
+	}
+}
+
+/*
+ * This attempts to synchronise the start of both threads to roughly
+ * the same time. On real hardware there is a little latency as the
+ * secondary vCPUs are powered up however this effect it much more
+ * exaggerated on a TCG host.
+ *
+ * Busy waits until the we pass a future point in time, returns final
+ * start time.
+ */
+
+static unsigned long sync_start(void)
+{
+	const unsigned long gate_mask = ~0x3ffff;
+	unsigned long gate, now;
+	gate = get_cntpct_el0() & gate_mask;
+	do {
+		now = get_cntpct_el0();
+	} while ((now & gate_mask)==gate);
+
+	return now;
+}
+
+
+void store_and_load_1(void)
+{
+	int i;
+	unsigned long start, end;
+
+	start = sync_start();
+	for (i=0; i<array_size; i++) {
+		volatile test_array *entry = &array[i];
+		unsigned int r;
+		entry->x = 1;
+		r = entry->y;
+		entry->r[0] = r;
+	}
+	end = get_cntpct_el0();
+
+	smp_mb();
+
+	while (!cpumask_test_cpu(1, &cpu_mask))
+		cpu_relax();
+
+	check_store_and_load_results("sal", 1, start, end);
+}
+
+void store_and_load_2(void)
+{
+	int i;
+	unsigned long start, end;
+
+	start = sync_start();
+	for (i=0; i<array_size; i++) {
+		volatile test_array *entry = &array[i];
+		unsigned int r;
+		entry->y = 1;
+		r = entry->x;
+		entry->r[1] = r;
+	}
+	end = get_cntpct_el0();
+
+	check_store_and_load_results("sal", 2, start, end);
+
+	cpumask_set_cpu(1, &cpu_mask);
+
+	halt();
+}
+
+void store_and_load_barrier_1(void)
+{
+	int i;
+	unsigned long start, end;
+
+	start = sync_start();
+	for (i=0; i< array_size; i++) {
+		volatile test_array *entry = &array[i];
+		unsigned int r;
+		entry->x = 1;
+		smp_mb();
+		r = entry->y;
+		entry->r[0] = r;
+	}
+	end = get_cntpct_el0();
+
+	smp_mb();
+
+	while (!cpumask_test_cpu(1, &cpu_mask))
+		cpu_relax();
+
+	check_store_and_load_results("sal_barrier", 1, start, end);
+}
+
+void store_and_load_barrier_2(void)
+{
+	int i;
+	unsigned long start, end;
+
+	start = sync_start();
+	for (i=0; i< array_size; i++) {
+		volatile test_array *entry = &array[i];
+		unsigned int r;
+		entry->y = 1;
+		smp_mb();
+		r = entry->x;
+		entry->r[1] = r;
+	}
+	end = get_cntpct_el0();
+
+	check_store_and_load_results("sal_barrier", 2, start, end);
+
+	cpumask_set_cpu(1, &cpu_mask);
+
+	halt();
+}
+
 
 /* Test array */
 static test_descr_t tests[] = {
@@ -202,7 +360,17 @@ static test_descr_t tests[] = {
 	{ "mp_acqrel", true,
 	  message_passing_read_acquire,
 	  { message_passing_write_release }
-	}
+	},
+
+	{ "sal",       false,
+	  store_and_load_1,
+	  { store_and_load_2 }
+	},
+
+	{ "sal_barrier", true,
+	  store_and_load_barrier_1,
+	  { store_and_load_barrier_2 }
+	},
 };
 
 
