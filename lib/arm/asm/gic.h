@@ -42,5 +42,65 @@
  */
 extern int gic_init(void);
 
+/*
+ * gic_common_ops collects some functions that we provide unit
+ * tests that don't care which gic version they're using.
+ */
+struct gic_common_ops {
+	int gic_version;
+	u32 (*read_iar)(void);
+	u32 (*iar_irqnr)(u32 iar);
+	void (*write_eoir)(u32 irqstat);
+	void (*ipi_send)(int cpu, int irq);
+};
+
+extern struct gic_common_ops *gic_common_ops;
+
+static inline int gic_version(void)
+{
+	assert(gic_common_ops);
+	return gic_common_ops->gic_version;
+}
+
+static inline u32 gic_read_iar(void)
+{
+	assert(gic_common_ops && gic_common_ops->read_iar);
+	return gic_common_ops->read_iar();
+}
+
+static inline u32 gic_iar_irqnr(u32 iar)
+{
+	assert(gic_common_ops && gic_common_ops->iar_irqnr);
+	return gic_common_ops->iar_irqnr(iar);
+}
+
+static inline void gic_write_eoir(u32 irqstat)
+{
+	assert(gic_common_ops && gic_common_ops->write_eoir);
+	gic_common_ops->write_eoir(irqstat);
+}
+
+static inline void gic_ipi_send(int cpu, int irq)
+{
+	assert(gic_common_ops && gic_common_ops->ipi_send);
+	gic_common_ops->ipi_send(cpu, irq);
+}
+
+static inline void gic_enable_defaults(void)
+{
+	switch (gic_version()) {
+	case 2:
+		gicv2_enable_defaults();
+		break;
+	case 3:
+		gicv3_enable_defaults();
+		break;
+	default:
+		printf("%s: Unknown gic version %d\n", __func__,
+			gic_version());
+		abort();
+	}
+}
+
 #endif /* !__ASSEMBLY__ */
 #endif /* _ASMARM_GIC_H_ */
