@@ -10,9 +10,11 @@
 #include <asm/io.h>
 
 struct gicv2_data gicv2_data;
+struct gicv3_data gicv3_data;
 
 /*
  * Documentation/devicetree/bindings/interrupt-controller/arm,gic.txt
+ * Documentation/devicetree/bindings/interrupt-controller/arm,gic-v3.txt
  */
 static bool
 gic_get_dt_bases(const char *compatible, void **base1, void **base2)
@@ -50,10 +52,18 @@ int gicv2_init(void)
 			&gicv2_data.dist_base, &gicv2_data.cpu_base);
 }
 
+int gicv3_init(void)
+{
+	return gic_get_dt_bases("arm,gic-v3", &gicv3_data.dist_base,
+			&gicv3_data.redist_base[0]);
+}
+
 int gic_init(void)
 {
 	if (gicv2_init())
 		return 2;
+	else if (gicv3_init())
+		return 3;
 	return 0;
 }
 
@@ -66,4 +76,67 @@ void gicv2_enable_defaults(void)
 	}
 	writel(GICC_INT_PRI_THRESHOLD, gicv2_cpu_base() + GIC_CPU_PRIMASK);
 	writel(GICC_ENABLE, gicv2_cpu_base() + GIC_CPU_CTRL);
+}
+
+void gicv3_set_redist_base(void)
+{
+	u32 aff = mpidr_compress(get_mpidr());
+	void *ptr = gicv3_data.redist_base[0];
+	u64 typer;
+
+	do {
+		typer = gicv3_read_typer(ptr + GICR_TYPER);
+		if ((typer >> 32) == aff) {
+			gicv3_redist_base() = ptr;
+			return;
+		}
+		ptr += SZ_64K * 2; /* skip RD_base and SGI_base */
+	} while (!(typer & GICR_TYPER_LAST));
+	assert(0);
+}
+
+void gicv3_enable_defaults(void)
+{
+	void *dist = gicv3_dist_base();
+	void *sgi_base;
+	unsigned int i;
+
+	if (smp_processor_id() == 0) {
+		u32 typer = readl(dist + GICD_TYPER);
+
+		gicv3_data.irq_nr = GICD_TYPER_IRQS(typer);
+		if (gicv3_data.irq_nr > 1020) {
+			printf("GICD_TYPER_IRQS reported %d! "
+			       "Clamping to max=1020.\n", 1020);
+			gicv3_data.irq_nr = 1020;
+		}
+
+		writel(0, dist + GICD_CTLR);
+		gicv3_dist_wait_for_rwp();
+
+		for (i = 32; i < gicv3_data.irq_nr; i += 32)
+			writel(~0, dist + GICD_IGROUPR + i / 8);
+
+		writel(GICD_CTLR_ARE_NS | GICD_CTLR_ENABLE_G1A | GICD_CTLR_ENABLE_G1,
+		       dist + GICD_CTLR);
+		gicv3_dist_wait_for_rwp();
+	}
+
+	if (!gicv3_redist_base())
+		gicv3_set_redist_base();
+	sgi_base = gicv3_sgi_base();
+
+	writel(~0, sgi_base + GICR_IGROUPR0);
+
+	writel(GICD_INT_EN_CLR_X32, sgi_base + GIC_DIST_ACTIVE_CLEAR);
+	writel(GICD_INT_EN_CLR_PPI, sgi_base + GIC_DIST_ENABLE_CLEAR);
+	writel(GICD_INT_EN_SET_SGI, sgi_base + GIC_DIST_ENABLE_SET);
+
+	for (i = 0; i < 32; i += 4)
+		writel(GICD_INT_DEF_PRI_X4, sgi_base + GIC_DIST_PRI + i);
+	gicv3_redist_wait_for_rwp();
+
+	gicv3_write_pmr(0xf0);
+	gicv3_write_ctlr(ICC_CTLR_EL1_EOImode_drop_dir);
+	gicv3_write_grpen1(1);
 }

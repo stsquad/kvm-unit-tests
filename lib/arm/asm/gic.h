@@ -7,6 +7,7 @@
 #define _ASMARM_GIC_H_
 
 #include <asm/gic-v2.h>
+#include <asm/gic-v3.h>
 
 /*
  * gic_init will try to find all known gics, and then
