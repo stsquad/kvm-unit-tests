@@ -14,6 +14,7 @@ tests-common += $(TEST_DIR)/spinlock-test.flat
 tests-common += $(TEST_DIR)/pci-test.flat
 tests-common += $(TEST_DIR)/gic.flat
 tests-common += $(TEST_DIR)/tlbflush-code.flat
+tests-common += $(TEST_DIR)/tlbflush-data.flat
 
 all: test_cases
 
@@ -83,3 +84,4 @@ test_cases: $(generated_files) $(tests-common) $(tests)
 
 $(TEST_DIR)/selftest.o $(cstart.o): $(asm-offsets)
 $(TEST_DIR)/tlbflush-code.elf: $(cstart.o) $(TEST_DIR)/tlbflush-code.o
+$(TEST_DIR)/tlbflush-data.elf: $(cstart.o) $(TEST_DIR)/tlbflush-data.o
