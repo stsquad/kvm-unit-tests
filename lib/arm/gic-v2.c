@@ -25,3 +25,43 @@ void gicv2_enable_defaults(void)
 	writel(GICC_INT_PRI_THRESHOLD, cpu_base + GICC_PMR);
 	writel(GICC_ENABLE, cpu_base + GICC_CTLR);
 }
+
+static u32 gicv2_read_iar(void)
+{
+	return readl(gicv2_cpu_base() + GICC_IAR);
+}
+
+static u32 gicv2_iar_irqnr(u32 iar)
+{
+	return iar & GICC_IAR_INT_ID_MASK;
+}
+
+static void gicv2_write_eoir(u32 irqstat)
+{
+	writel(irqstat, gicv2_cpu_base() + GICC_EOIR);
+}
+
+static void gicv2_ipi_send_single(int irq, int cpu)
+{
+	assert(cpu < 8);
+	assert(irq < 16);
+	writel(1 << (cpu + 16) | irq, gicv2_dist_base() + GICD_SGIR);
+}
+
+static void gicv2_ipi_send_mask(int irq, const cpumask_t *dest)
+{
+	u8 tlist = (u8)cpumask_bits(dest)[0];
+
+	assert(irq < 16);
+	writel(tlist << 16 | irq, gicv2_dist_base() + GICD_SGIR);
+}
+
+struct gic_common_ops gicv2_common_ops = {
+	.gic_version = 2,
+	.enable_defaults = gicv2_enable_defaults,
+	.read_iar = gicv2_read_iar,
+	.iar_irqnr = gicv2_iar_irqnr,
+	.write_eoir = gicv2_write_eoir,
+	.ipi_send_single = gicv2_ipi_send_single,
+	.ipi_send_mask = gicv2_ipi_send_mask,
+};

@@ -32,6 +32,7 @@
 #include <asm/gic-v3.h>
 
 #ifndef __ASSEMBLY__
+#include <asm/cpumask.h>
 
 /*
  * gic_init will try to find all known gics, and then
@@ -41,6 +42,68 @@
  *  > 0 : the gic version of the gic found
  */
 extern int gic_init(void);
+
+/*
+ * gic_common_ops collects useful functions for unit tests which
+ * aren't concerned with the gic version they're using.
+ */
+struct gic_common_ops {
+	int gic_version;
+	void (*enable_defaults)(void);
+	u32 (*read_iar)(void);
+	u32 (*iar_irqnr)(u32 iar);
+	void (*write_eoir)(u32 irqstat);
+	void (*ipi_send_single)(int irq, int cpu);
+	void (*ipi_send_mask)(int irq, const cpumask_t *dest);
+};
+
+extern struct gic_common_ops *gic_common_ops;
+
+static inline int gic_version(void)
+{
+	assert(gic_common_ops);
+	return gic_common_ops->gic_version;
+}
+
+static inline void gic_enable_defaults(void)
+{
+	if (!gic_common_ops) {
+		int ret = gic_init();
+		assert(ret != 0);
+	} else
+		assert(gic_common_ops->enable_defaults);
+	gic_common_ops->enable_defaults();
+}
+
+static inline u32 gic_read_iar(void)
+{
+	assert(gic_common_ops && gic_common_ops->read_iar);
+	return gic_common_ops->read_iar();
+}
+
+static inline u32 gic_iar_irqnr(u32 iar)
+{
+	assert(gic_common_ops && gic_common_ops->iar_irqnr);
+	return gic_common_ops->iar_irqnr(iar);
+}
+
+static inline void gic_write_eoir(u32 irqstat)
+{
+	assert(gic_common_ops && gic_common_ops->write_eoir);
+	gic_common_ops->write_eoir(irqstat);
+}
+
+static inline void gic_ipi_send_single(int irq, int cpu)
+{
+	assert(gic_common_ops && gic_common_ops->ipi_send_single);
+	gic_common_ops->ipi_send_single(irq, cpu);
+}
+
+static inline void gic_ipi_send_mask(int irq, const cpumask_t *dest)
+{
+	assert(gic_common_ops && gic_common_ops->ipi_send_mask);
+	gic_common_ops->ipi_send_mask(irq, dest);
+}
 
 #endif /* !__ASSEMBLY__ */
 #endif /* _ASMARM_GIC_H_ */

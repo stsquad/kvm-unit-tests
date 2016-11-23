@@ -7,6 +7,8 @@
 #include <asm/gic.h>
 #include <asm/io.h>
 
+struct gic_common_ops *gic_common_ops;
+
 struct gicv2_data gicv2_data;
 struct gicv3_data gicv3_data;
 
@@ -58,9 +60,12 @@ int gicv3_init(void)
 
 int gic_init(void)
 {
-	if (gicv2_init())
+	if (gicv2_init()) {
+		gic_common_ops = &gicv2_common_ops;
 		return 2;
-	else if (gicv3_init())
+	} else if (gicv3_init()) {
+		gic_common_ops = &gicv3_common_ops;
 		return 3;
+	}
 	return 0;
 }

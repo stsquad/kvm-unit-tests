@@ -32,5 +32,7 @@ extern struct gicv2_data gicv2_data;
 extern int gicv2_init(void);
 extern void gicv2_enable_defaults(void);
 
+extern struct gic_common_ops gicv2_common_ops;
+
 #endif /* !__ASSEMBLY__ */
 #endif /* _ASMARM_GIC_V2_H_ */
