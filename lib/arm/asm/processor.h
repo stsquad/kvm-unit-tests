@@ -33,9 +33,9 @@ static inline unsigned long current_cpsr(void)
 
 #define current_mode() (current_cpsr() & MODE_MASK)
 
-static inline unsigned int get_mpidr(void)
+static inline unsigned long get_mpidr(void)
 {
-	unsigned int mpidr;
+	unsigned long mpidr;
 	asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r" (mpidr));
 	return mpidr;
 }
