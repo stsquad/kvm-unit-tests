@@ -25,8 +25,13 @@ static inline void local_flush_tlb_all(void)
 
 static inline void flush_tlb_all(void)
 {
-	//TODO
-	local_flush_tlb_all();
+	dsb();
+	/* TLBIALL for this CPU (in theory should be enough for KVM)*/
+	asm volatile("mcr p15, 0, %0, c8, c7, 0" :: "r" (0));
+	/* TLBIALLIS for the other CPUs */
+	asm volatile("mcr p15, 0, %0, c8, c3, 0" :: "r" (0));
+	dsb();
+	isb();
 }
 
 static inline void flush_tlb_page(unsigned long vaddr)
