@@ -93,7 +93,7 @@ static void wait_on(int cpu, cpumask_t *mask)
 
 static uint64_t sync_start(void)
 {
-	const uint64_t gate_mask = ~0x7ff;
+	const uint64_t gate_mask = ~0x7ffff;
 	uint64_t gate, now;
 	gate = get_cntvct() & gate_mask;
 	do {
@@ -208,23 +208,25 @@ static int check_pages(int cpu, const char *msg,
 	u64 ts;
 
 	/* For each audit record */
-	for (audit_index = 0; audit_index < MIN(flushes, NR_AUDIT_RECORDS); audit_index++) {
+	for (audit_index = 0;
+	     audit_index < MIN(flushes, NR_AUDIT_RECORDS);
+	     audit_index++) {
 		audit_rec_t *rec = get_audit_record(audit, audit_index);
 
 		do {
 			/* Work through timestamps until we overtake
 			 * this audit record */
-			ts = test_page->timestamps[ts_index];
+			ts = test_page->timestamps[ts_index++];
 
 			if (ts == 0) {
 				empty++;
-			} else if (ts < rec->time_before_flush) {
+			} else if (ts <= rec->time_before_flush) {
 				if (test_page == prev_page) {
 					write++;
 				} else {
 					late++;
 				}
-			} else if (ts >= rec->time_before_flush
+			} else if (ts > rec->time_before_flush
 				&& ts <= rec->time_after_flush) {
 				if (test_page == prev_page
 					|| test_page == rec->newbuf) {
@@ -233,9 +235,6 @@ static int check_pages(int cpu, const char *msg,
 					weird++;
 				}
 			} else if (ts > rec->time_after_flush) {
-				if (test_page == rec->newbuf) {
-					write++;
-				}
 				/* It's possible the ts is way ahead
 				 * of the current record so we can't
 				 * call a non-match weird...
@@ -244,9 +243,7 @@ static int check_pages(int cpu, const char *msg,
 				 */
 				break;
 			}
-
-			ts = test_page->timestamps[ts_index++];
-		} while (ts <= rec->time_after_flush && ts_index < NR_TIMESTAMPS);
+		} while (ts_index < NR_TIMESTAMPS);
 
 
 		/* Next record */
