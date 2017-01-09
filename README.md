@@ -79,3 +79,4 @@ You can add the following to .git/config to do this automatically for you:
     [format]
         subjectprefix = kvm-unit-tests PATCH
 
+Please run the kernel's ./scripts/checkpatch.pl on new patches
