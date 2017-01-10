@@ -52,6 +52,11 @@ ACCEL=<name> environment variable:
 
     ACCEL=kvm ./x86-run ./x86/msr.flat
 
+To modify or disable the timeouts (see man timeout(1)):
+
+    TIMEOUT=$DURATION ./run_tests.sh
+    TIMEOUT=0 ./run_tests.sh
+
 # Unit test inputs
 
 Unit tests use QEMU's '-append <args...>' parameter for command line
