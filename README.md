@@ -47,6 +47,14 @@ environment variable:
 
     QEMU=/tmp/qemu/x86_64-softmmu/qemu-system-x86_64 ./x86-run ./x86/msr.flat
 
+To force the acceleration mode:
+
+    ACCEL=tcg ./run_tests.sh
+
+To extend or disable the timeouts:
+
+    TIMEOUT=0 ./run_tests.sh
+
 # Contributing
 
 ## Directory structure
