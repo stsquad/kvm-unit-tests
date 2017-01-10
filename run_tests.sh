@@ -13,7 +13,7 @@ function usage()
 {
 cat <<EOF
 
-Usage: $0 [-g group] [-h] [-v]
+Usage: $0 [-g group] [-h] [-v] [-- QEMU options]
 
     -g: Only execute tests in the given group
     -h: Output this help text
@@ -22,6 +22,8 @@ Usage: $0 [-g group] [-h] [-v]
 Set the environment variable QEMU=/path/to/qemu-system-ARCH to
 specify the appropriate qemu binary for ARCH-run.
 
+All options specified after -- are passed on to QEMU.
+
 EOF
 }
 
@@ -29,6 +31,7 @@ RUNTIME_arch_run="./$TEST_DIR/run"
 source scripts/runtime.bash
 
 while getopts "g:hv" opt; do
+
     case $opt in
         g)
             only_group=$OPTARG
@@ -46,6 +49,12 @@ while getopts "g:hv" opt; do
     esac
 done
 
+# Any options left for QEMU?
+shift $((OPTIND-1))
+if [ "$#" -gt  0 ]; then
+    extra_opts="$@"
+fi
+
 RUNTIME_log_stderr () { cat >> test.log; }
 RUNTIME_log_stdout () {
     if [ "$PRETTY_PRINT_STACKS" = "yes" ]; then
@@ -59,4 +68,4 @@ RUNTIME_log_stdout () {
 config=$TEST_DIR/unittests.cfg
 rm -f test.log
 printf "BUILD_HEAD=$(cat build-head)\n\n" > test.log
-for_each_unittest $config run
+for_each_unittest $config run "$extra_opts"
