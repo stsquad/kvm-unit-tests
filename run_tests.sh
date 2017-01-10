@@ -13,8 +13,7 @@ function usage()
 {
 cat <<EOF
 
-Usage: $0 [-g group] [-h] [-v]
-Usage: $0 [-g group] [-h] [-v] [-j NUM-TASKS]
+Usage: $0 [-g group] [-h] [-v] [-j NUM-TASKS] [-- QEMU options]
 
     -g: Only execute tests in the given group
     -h: Output this help text
@@ -23,6 +22,8 @@ Usage: $0 [-g group] [-h] [-v] [-j NUM-TASKS]
 
 Set the environment variable QEMU=/path/to/qemu-system-ARCH to
 specify the appropriate qemu binary for ARCH-run.
+
+All options specified after -- are passed on to QEMU.
 
 EOF
 }
@@ -54,6 +55,12 @@ while getopts "g:hj:v" opt; do
             ;;
     esac
 done
+
+# Any options left for QEMU?
+shift $((OPTIND-1))
+if [ "$#" -gt  0 ]; then
+    extra_opts="$@"
+fi
 
 # RUNTIME_log_file will be configured later
 RUNTIME_log_stderr () { cat >> $RUNTIME_log_file; }
@@ -93,7 +100,7 @@ mkdir $unittest_log_dir || exit 2
 echo "BUILD_HEAD=$(cat build-head)" > $unittest_log_dir/SUMMARY
 
 trap "wait; exit 130" SIGINT
-for_each_unittest $config run_task
+for_each_unittest $config run_task "$extra_opts"
 
 # wait until all tasks finish
 wait

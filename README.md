@@ -60,6 +60,12 @@ To modify or disable the timeouts (see man timeout(1)):
     TIMEOUT=$DURATION ./run_tests.sh
     TIMEOUT=0 ./run_tests.sh
 
+Any arguments past the end-of-arguments marker (--) is passed on down
+to the QEMU invocation. This can of course be combined with the other
+modifiers:
+
+    ACCEL=tcg ./run_tests.sh -v -- --accel tcg,thread=multi
+
 # Contributing
 
 ## Directory structure
