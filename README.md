@@ -47,6 +47,19 @@ environment variable:
 
     QEMU=/tmp/qemu/x86_64-softmmu/qemu-system-x86_64 ./x86-run ./x86/msr.flat
 
+To force the use of TCG:
+
+    ACCEL=tcg ./run_tests.sh
+
+To force failure when KVM is not present:
+
+    ACCEL=kvm ./run_tests.sh
+
+To modify or disable the timeouts (see man timeout(1)):
+
+    TIMEOUT=$DURATION ./run_tests.sh
+    TIMEOUT=0 ./run_tests.sh
+
 # Contributing
 
 ## Directory structure
