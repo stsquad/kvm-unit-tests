@@ -83,7 +83,7 @@ bool pci_setup_msi(struct pci_dev *dev, uint64_t msi_addr, uint32_t msi_data)
 		pci_config_writel(addr, offset + PCI_MSI_DATA_32, msi_data);
 		printf("MSI: dev 0x%x init 32bit address: ", addr);
 	}
-	printf("addr=0x%" PRIx64 ", data=0x%x\n", msi_addr, msi_data);
+	printf("addr=0x%" PRIx64 ", data=0x%" PRIx32 "\n", msi_addr, msi_data);
 
 	pci_msi_set_enable(dev, true);
 
@@ -252,7 +252,7 @@ void pci_bar_print(struct pci_dev *dev, int bar_num)
 		printf("BAR#%d,%d [%" PRIx64 "-%" PRIx64 " ",
 		       bar_num, bar_num + 1, start, end);
 	} else {
-		printf("BAR#%d [%02x-%02x ",
+		printf("BAR#%d [%" PRIx32 "-%" PRIx32 " ",
 		       bar_num, (uint32_t)start, (uint32_t)end);
 	}
 
