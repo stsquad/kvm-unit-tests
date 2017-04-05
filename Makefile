@@ -79,7 +79,12 @@ $(LIBFDT_archive): $(addprefix $(LIBFDT_objdir)/,$(LIBFDT_OBJS))
 	$(AR) rcs $@ $^
 
 %.o: %.S
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -nostdlib -o $@ $<
+
+%.o: %.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 -include */.*.d */*/.*.d
 
