@@ -16,7 +16,10 @@ tests-common += $(TEST_DIR)/pmu.flat
 tests-common += $(TEST_DIR)/gic.flat
 tests-common += $(TEST_DIR)/psci.flat
 
-tests-all = $(tests-common) $(tests)
+scripts-common += $(TEST_DIR)/run
+scripts-common += $(TEST_DIR)/unittests.cfg
+
+tests-all = $(tests-common) $(tests) $(scripts_common)
 all: $(tests-all)
 
 ##################################################################
@@ -26,13 +29,13 @@ CFLAGS += -std=gnu99
 CFLAGS += -ffreestanding
 CFLAGS += -Wextra
 CFLAGS += -O2
-CFLAGS += -I lib -I lib/libfdt
+CFLAGS += -I $(SRCDIR)/lib -I $(SRCDIR)/lib/libfdt -I lib
 
 # We want to keep intermediate files
 .PRECIOUS: %.elf %.o
 
 asm-offsets = lib/$(ARCH)/asm-offsets.h
-include scripts/asm-offsets.mak
+include $(SRCDIR)/scripts/asm-offsets.mak
 
 cflatobjs += lib/util.o
 cflatobjs += lib/alloc.o
@@ -60,11 +63,11 @@ start_addr := $(shell printf "%x\n" $$(( $(phys_base) + $(kernel_offset) )))
 
 FLATLIBS = $(libcflat) $(LIBFDT_archive) $(libgcc) $(libeabi)
 %.elf: LDFLAGS = $(CFLAGS) -nostdlib
-%.elf: %.o $(FLATLIBS) arm/flat.lds $(cstart.o)
+%.elf: %.o $(FLATLIBS) $(SRCDIR)/arm/flat.lds $(cstart.o)
 	$(CC) $(LDFLAGS) -o $@ \
-		-Wl,-T,arm/flat.lds,--build-id=none,-Ttext=$(start_addr) \
+		-Wl,-T,$(SRCDIR)/arm/flat.lds,--build-id=none,-Ttext=$(start_addr) \
 		$(filter %.o, $^) $(FLATLIBS) \
-		lib/auxinfo.c -DPROGNAME=\"$(@:.elf=.flat)\"
+		$(SRCDIR)/lib/auxinfo.c -DPROGNAME=\"$(@:.elf=.flat)\"
 
 %.flat: %.elf
 	$(OBJCOPY) -O binary $^ $@

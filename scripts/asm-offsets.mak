@@ -29,11 +29,13 @@ define make_asm_offsets
 endef
 
 $(asm-offsets:.h=.s): $(asm-offsets:.h=.c)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -fverbose-asm -S -o $@ $<
 
 $(asm-offsets): $(asm-offsets:.h=.s)
 	$(call make_asm_offsets)
-	cp -f $(asm-offsets) lib/generated
+	mkdir -p lib/generated
+	cp -f $(asm-offsets) lib/generated/
 
 asm_offsets_clean:
 	$(RM) $(asm-offsets) $(asm-offsets:.h=.s) \
