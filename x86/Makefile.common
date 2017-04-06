@@ -54,7 +54,11 @@ tests-common += api/dirty-log
 tests-common += api/dirty-log-perf
 endif
 
+scripts-common += $(TEST_DIR)/run
+scripts-common += $(TEST_DIR)/unittests.cfg
+
 test_cases: $(tests-common) $(tests)
+
 
 $(TEST_DIR)/%.o: CFLAGS += -std=gnu99 -ffreestanding -I lib -I lib/x86
 

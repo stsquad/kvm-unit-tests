@@ -31,6 +31,10 @@ cflatobjs := \
 	lib/report.o \
 	lib/stack.o
 
+# These are scripts we want linked from the source tree
+scripts-common := run_tests.sh \
+	scripts
+
 # libfdt paths
 LIBFDT_objdir = $(SRCDIR)/lib/libfdt
 LIBFDT_srcdir = $(SRCDIR)/lib/libfdt
@@ -86,7 +90,16 @@ $(LIBFDT_archive): $(addprefix $(LIBFDT_objdir)/,$(LIBFDT_OBJS))
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(scripts-common): $(SRCDIR)/$@
+	ln -sf $<$@ $@
+
 -include */.*.d */*/.*.d
+
+
+# We only need to link common scripts for out-of-src-tree builds
+ifneq ($(CURDIR), $(SRCDIR))
+all: $(scripts-common)
+endif
 
 all: $(shell git -C $(SRCDIR) rev-parse --verify --short=8 HEAD >build-head 2>/dev/null)
 
