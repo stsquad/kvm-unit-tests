@@ -17,7 +17,7 @@ cflatobjs += lib/x86/acpi.o
 cflatobjs += lib/x86/stack.o
 
 $(libcflat): LDFLAGS += -nostdlib
-$(libcflat): CFLAGS += -ffreestanding -I lib
+$(libcflat): CFLAGS += -ffreestanding -I $(SRCDIR)/lib -I lib
 
 CFLAGS += -m$(bits)
 CFLAGS += -O1
@@ -31,8 +31,8 @@ libgcc := $(shell $(CC) -m$(bits) --print-libgcc-file-name)
 .PRECIOUS: %.elf %.o
 
 FLATLIBS = lib/libcflat.a $(libgcc)
-%.elf: %.o $(FLATLIBS) x86/flat.lds $(cstart.o)
-	$(CC) $(CFLAGS) -nostdlib -o $@ -Wl,-T,x86/flat.lds \
+%.elf: %.o $(FLATLIBS) $(SRCDIR)/x86/flat.lds $(cstart.o)
+	$(CC) $(CFLAGS) -nostdlib -o $@ -Wl,-T,$(SRCDIR)/x86/flat.lds \
 		$(filter %.o, $^) $(FLATLIBS)
 
 %.flat: %.elf
@@ -60,10 +60,10 @@ scripts-common += $(TEST_DIR)/unittests.cfg
 test_cases: $(tests-common) $(tests)
 
 
-$(TEST_DIR)/%.o: CFLAGS += -std=gnu99 -ffreestanding -I lib -I lib/x86
+$(TEST_DIR)/%.o: CFLAGS += -std=gnu99 -ffreestanding -I $(SRCDIR)/lib -I $(SRCDIR)/lib/x86 -I lib
 
 $(TEST_DIR)/realmode.elf: $(TEST_DIR)/realmode.o
-	$(CC) -m32 -nostdlib -o $@ -Wl,-T,$(TEST_DIR)/realmode.lds $^
+	$(CC) -m32 -nostdlib -o $@ -Wl,-T,$(SRCDIR)/$(TEST_DIR)/realmode.lds $^
 
 $(TEST_DIR)/realmode.o: bits = 32
 
