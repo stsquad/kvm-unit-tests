@@ -214,20 +214,45 @@ static void test_timer(struct timer_info *info)
 	 * still read the pending state even if it's disabled. */
 	set_timer_irq_enabled(info, false);
 
+	/* Verify count goes up */
+	report(info->read_counter() >= now, "counter increments");
+
 	/* Enable the timer, but schedule it for much later */
 	info->write_cval(later);
 	info->write_ctl(ARCH_TIMER_CTL_ENABLE);
 	isb();
-	report(!gic_timer_pending(info), "not pending before");
+	report(!gic_timer_pending(info), "not pending before 10s");
 
+	/* Check with a maximum possible cval */
+	info->write_cval(UINT64_MAX);
+	isb();
+	report(!gic_timer_pending(info), "not pending before UINT64_MAX");
+
+	/* also by setting tval */
+	info->write_tval(time_10s);
+	isb();
+	report(!gic_timer_pending(info), "not pending before 10s (via tval)");
+	report_info("TVAL is %d (delta CVAL %ld) ticks",
+		    info->read_tval(), info->read_cval() - info->read_counter());
+
+        /* check pending once cval is before now */
 	info->write_cval(now - 1);
 	isb();
 	report(gic_timer_pending(info), "interrupt signal pending");
+	report_info("TVAL is %d ticks", info->read_tval());
 
 	/* Disable the timer again and prepare to take interrupts */
 	info->write_ctl(0);
 	set_timer_irq_enabled(info, true);
 	report(!gic_timer_pending(info), "interrupt signal no longer pending");
+
+	/* QEMU bug when cntvoff_el2 > 0
+	 * https://bugs.launchpad.net/bugs/1859021 */
+	info->write_ctl(ARCH_TIMER_CTL_ENABLE);
+	info->write_cval(UINT64_MAX);
+	isb();
+	report(!gic_timer_pending(info), "not pending before UINT64_MAX (irqs on)");
+	info->write_ctl(0);
 
 	report(test_cval_10msec(info), "latency within 10 ms");
 	report(info->irq_received, "interrupt received");
